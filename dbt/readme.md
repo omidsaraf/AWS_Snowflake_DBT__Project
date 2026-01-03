@@ -12,28 +12,29 @@ Easy to extend for other domains: accounts, transactions, loans, cards, etc.
 ```Plaintext
 dbt/
 ├── models/
-│   ├── staging/               # LAYER 1: Standardizing & Hashing
-│   │   ├── _sources.yml       # <--- MAPS RAW SNOWFLAKE TABLES
-│   │   ├── stg_accounts.sql
-│   │   ├── stg_customer.sql
-│   │   └── stg_transactions.sql
+│   ├── staging/
+│   │   ├── _sources.yml             # Maps RAW_DB.LANDING tables
+│   │   ├── stg_banking_accounts.sql # Parent for Hub_Account & Sat_Account
+│   │   ├── stg_customer.sql         # Parent for Hub_Customer & Sat_Customer
+│   │   └── stg_transactions.sql     # Parent for T_Link_Transactions
 │   │
-│   ├── vault/                 # LAYER 2: The Auditable Core
-│   │   ├── hubs/              # Unique Business Keys (Who/What)
+│   ├── vault/
+│   │   ├── hubs/
 │   │   │   ├── hub_account.sql
 │   │   │   └── hub_customer.sql
-│   │   ├── links/             # Relationships (Associations)
-│   │   │   └── link_customer_account.sql
-│   │   └── satellites/        # Descriptive Context (History)
+│   │   ├── links/
+│   │   │   ├── link_customer_account.sql
+│   │   │   └── t_link_transactions.sql # <--- ADDED: Transactional Link
+│   │   └── satellites/
 │   │       ├── sat_customer_profile.sql
 │   │       └── sat_account_balance.sql
 │   │
-│   └── marts/                 # LAYER 3: Reporting (Gold Layer)
+│   └── marts/
 │       ├── _marts.yml
-│       └── mart_customer_360.sql
+│       └── mart_customer_360.sql    # Joins Hubs, Links, & latest Sat records
 │
-├── macros/                    # Custom Hashing or Masking logic
-├── tests/                     # Data Quality (e.g., check for negative balances)
-├── dbt_project.yml            # Core Orchestration & Materialization
-├── packages.yml               # External Engines (automate-dv)
-└── selectors.yml              # (Optional) For running specific layers
+├── macros/                          # automate-dv macros & custom masking
+├── tests/                           # Business logic tests (e.g. balance > 0)
+├── dbt_project.yml                  # Configures +materialized: incremental
+├── packages.yml                     # Includes automate_dv & dbt_utils
+└── selectors.yml
