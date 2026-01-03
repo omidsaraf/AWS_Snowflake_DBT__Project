@@ -1,6 +1,10 @@
 Contains Dev Snowflake passwords
 
 
-cd env/dev
-terraform init
-terraform apply
+# NILOOMID-banking-data-platform/.env
+
+# Snowflake Credentials
+SNOWFLAKE_ACCOUNT="your_account_id"
+SNOWFLAKE_USER="your_username"
+SNOWFLAKE_PASSWORD="your_secure_password"
+SNOWFLAKE_ROLE="transformer_role"
