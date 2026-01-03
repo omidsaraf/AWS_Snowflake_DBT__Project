@@ -2,8 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: airflow-webserver
-  labels:
-    app: airflow
 spec:
   replicas: 1
   selector:
@@ -17,12 +15,28 @@ spec:
       containers:
       - name: airflow
         image: apache/airflow:2.8.0
+        args: ["webserver"] # Explicitly start the webserver
         ports:
         - containerPort: 8080
         env:
         - name: AIRFLOW__CORE__EXECUTOR
           value: "LocalExecutor"
+        - name: AIRFLOW__CORE__LOAD_EXAMPLES
+          value: "False"
         - name: AIRFLOW__CORE__FERNET_KEY
-          value: "YOUR_FERNET_KEY"
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: fernet-key
         - name: AIRFLOW__CORE__SQL_ALCHEMY_CONN
-          value: "postgresql+psycopg2://airflow:airflow@postgres/airflow"
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: sql-alchemy-conn
+        volumeMounts:
+        - name: airflow-dags
+          mountPath: /opt/airflow/dags
+      volumes:
+      - name: airflow-dags
+        configMap:
+          name: airflow-dag-config # Mounts your Python DAGs into the container
