@@ -71,10 +71,19 @@ NILOOMID-banking-data-platform/
 ├── docs/
 │   └── images/
 ├── infrastructure/
-│   ├── terraform/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── outputs.tf
+└── terraform/          # <--- Infrastructure Root
+        ├── modules/        # Reusable code (EKS, S3, Snowflake)
+        │   ├── aws/
+        │   └── snowflake/
+        └── env/            # <--- Environment Definitions
+            ├── dev/
+            │   ├── main.tf
+            │   ├── variables.tf
+            │   └── backend.tf
+            └── prod/
+                ├── main.tf
+                ├── variables.tf
+                └── backend.tf
 │   └── k8s/
 │       ├── airflow-deployment.yaml
 │       ├── spark-job.yaml
