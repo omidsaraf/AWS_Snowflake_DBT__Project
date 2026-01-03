@@ -9,10 +9,19 @@ When you are ready to deploy, you navigate to the environment folder and Terrafo
 
 Bash
 
-# To deploy Dev
+### To deploy Dev
 cd infrastructure/terraform/env/dev
 terraform apply
 
-# To deploy Prod
+### To deploy Prod
 cd infrastructure/terraform/env/prod
+terraform apply
+
+
+
+Since you shouldn't type passwords in these files, you can run your terraform apply like this in your terminal:
+
+Bash
+
+export TF_VAR_snowflake_password="your_secure_password_here"
 terraform apply
