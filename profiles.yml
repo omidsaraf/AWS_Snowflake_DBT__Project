@@ -1,0 +1,20 @@
+niloomid_snowflake:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: your_org_account_id
+      user: your_username
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}" # Pulls from your .env file
+      role: SYSADMIN
+      database: NILOOMID_DEV
+      warehouse: COMPUTE_WH
+      schema: STG # Default schema for local runs
+      threads: 4
+
+##Since this is for your local machine, you can hardcode your account details (but use env vars for the password to be safe)
+# In your dbt_project.yml, make sure the profile: key matches the name in your profiles.yml:
+
+# In dbt_project.yml: profile: 'niloomid_snowflake'
+
+# In profiles.yml: niloomid_snowflake:
