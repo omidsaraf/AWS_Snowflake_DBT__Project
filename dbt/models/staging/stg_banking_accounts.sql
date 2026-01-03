@@ -1,16 +1,27 @@
+
 {%- set yaml_metadata -%}
-source_model: 'raw_banking_accounts'
+source_model: 'raw_accounts'
 derived_columns:
-  RECORD_SOURCE: '!AWS_S3_BANKING_SYSTEM'
+  RECORD_SOURCE: '!AWS_S3_BANKING_CORE'
   LOAD_DATETIME: 'CURRENT_TIMESTAMP()'
 hashed_columns:
-  ACCOUNT_HK: 'ACCOUNT_ID'             -- Primary Hash Key for the Hub
-  ACCOUNT_HASHDIFF:                    -- Checksum for tracking balance changes
+  # Primary Key for the Account Hub
+  ACCOUNT_HK: 'account_id'
+  
+  # Business Key for the Customer Hub (for later joins)
+  CUSTOMER_HK: 'customer_id'
+
+  # Link Key: The unique relationship between a customer and an account
+  LINK_CUSTOMER_ACCOUNT_HK:
+    - 'customer_id'
+    - 'account_id'
+    
+  # Change tracking for the Satellite
+  ACCOUNT_HASHDIFF:   -- Checksum for tracking balance changes
     is_hashdiff: true
     columns:
-      - 'ACCOUNT_TYPE'
-      - 'CURRENT_BALANCE'
-      - 'ACCOUNT_STATUS'
+      - 'account_type'
+      - 'balance'
 {%- endset -%}
 
 {% set metadata = fromyaml(yaml_metadata) %}
