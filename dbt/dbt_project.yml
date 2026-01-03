@@ -9,34 +9,39 @@ model-paths: ["models"]
 analysis-paths: ["analysis"]
 macro-paths: ["macros"]
 test-paths: ["tests"]
-seed-paths: ["data"]     # Replaces data-paths
+seed-paths: ["data"]
 
 target-path: "target"
-clean-targets: ["target", "dbt_packages"] # Replaces dbt_modules
+clean-targets: ["target", "dbt_packages"]
 
 models:
   niloomid_banking_dv:
     # --- STAGING LAYER ---
     staging:
       +schema: stg
-      +materialized: view      # Views keep staging fresh and lightweight
-    
+      +materialized: view
+
     # --- RAW VAULT LAYER ---
     vault:
-      # Hubs & Links: Unique keys and relationships
-      vault_hubs:
+      hubs:
         +schema: hub
         +materialized: incremental
         +on_schema_change: append_new_columns
 
-      vault_links:
+      links:
         +schema: link
         +materialized: incremental
+        +on_schema_change: append_new_columns
 
-      # Satellites: Historical context (SCD Type 2)
-      vault_sats:
+      satellites:
         +schema: sat
-        +materialized: incremental # Mandatory for tracking changes over time
+        +materialized: incremental
+        +on_schema_change: append_new_columns
+
+    # --- REPORTING LAYER ---
+    marts:
+      +schema: mart
+      +materialized: table  # Tables are faster for BI tools to query than views        
         
 ## This defines staging, hub, link, satellite schemas, materialization types, and project paths.
 # Incremental Materialization: By switching Hubs, Links, and Satellites to incremental, dbt only processes new or changed data since the last run. For a bank with millions of daily transactions, this can reduce your Snowflake credit burn by over 80%.
