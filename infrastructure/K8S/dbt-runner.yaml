@@ -1,28 +1,35 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: dbt-transform
+  name: dbt-transform-vault
 spec:
   template:
     spec:
       containers:
       - name: dbt
         image: yourdockerhub/dbt:latest
-        command: ["dbt", "run", "--project-dir", "/opt/dbt"]
+        # Using the selector we defined in selectors.yml!
+        command: ["dbt", "run", "--selector", "raw_vault_layer"] 
+        workingDir: /usr/app/dbt
         env:
-        - name: SNOWFLAKE_USER
-          valueFrom:
-            secretKeyRef:
-              name: snowflake-creds
-              key: user
-        - name: SNOWFLAKE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: snowflake-creds
-              key: password
-        - name: SNOWFLAKE_ACCOUNT
-          valueFrom:
-            secretKeyRef:
-              name: snowflake-creds
-              key: account
+          - name: DBT_PROFILES_DIR
+            value: "/usr/app/dbt/config"
+          - name: SNOWFLAKE_USER
+            valueFrom:
+              secretKeyRef:
+                name: snowflake-creds
+                key: user
+          - name: SNOWFLAKE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: snowflake-creds
+                key: password
+          # ... add other env vars as needed
+        volumeMounts:
+          - name: dbt-profile-volume
+            mountPath: /usr/app/dbt/config
+      volumes:
+        - name: dbt-profile-volume
+          configMap:
+            name: dbt-profile-config
       restartPolicy: OnFailure
