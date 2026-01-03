@@ -1,19 +1,47 @@
-```Plaintext
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
 
-# --- dbt specific ---
-target/             # Compiled SQL and manifest files (regenerated every run)
-dbt_packages/       # External libraries (installed via dbt deps)
-logs/               # Debug logs from your dbt runs
+# dbt
+dbt_packages/
+logs/
+target/
+dbt_modules/
+*.log
 
-# --- Credentials & Environment ---
-profiles.yml        # NEVER upload this (contains Snowflake passwords)
-.env                # Local environment variables
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+.terraform.lock.hcl
 
-# --- IDE & OS ---
-.vscode/            # VS Code settings
-.idea/              # PyCharm/IntelliJ settings
-.DS_Store           # macOS system files
-*.swp               # Vim swap files
+# Credentials
+.env
+profiles.yml
+*.pem
+*.key
 
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
-#### Security (Stops password leaks)
+# OS
+.DS_Store
+Thumbs.db
+
+# Airflow
+airflow.db
+airflow.cfg
+logs/
