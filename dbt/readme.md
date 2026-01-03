@@ -38,3 +38,7 @@ niloomid_banking_dv/ (Root)
 │       └── mart_customer_360.sql
 ├── macros/                      # Custom logic
 └── tests/                       # Data quality tests
+
+
+# This tells dbt: "The profile is HERE (.) but the models are in the dbt/ folder"
+dbt run --project-dir dbt --profiles-dir .
