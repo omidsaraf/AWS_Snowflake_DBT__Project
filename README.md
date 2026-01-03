@@ -208,3 +208,6 @@ We can create a **visual diagram** using icons (AWS, Snowflake, Spark, Airflow, 
    - Icon: BI tool / SQL query
 
 ---
+https://www.youtube.com/watch?v=5NCywQcJ2r8
+
+
