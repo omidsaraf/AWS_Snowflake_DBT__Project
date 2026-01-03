@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dbt-transform
+spec:
+  template:
+    spec:
+      containers:
+      - name: dbt
+        image: yourdockerhub/dbt:latest
+        command: ["dbt", "run", "--project-dir", "/opt/dbt"]
+        env:
+        - name: SNOWFLAKE_USER
+          valueFrom:
+            secretKeyRef:
+              name: snowflake-creds
+              key: user
+        - name: SNOWFLAKE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: snowflake-creds
+              key: password
+        - name: SNOWFLAKE_ACCOUNT
+          valueFrom:
+            secretKeyRef:
+              name: snowflake-creds
+              key: account
+      restartPolicy: OnFailure
