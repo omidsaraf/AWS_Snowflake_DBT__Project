@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: bronze-ingestion
+spec:
+  template:
+    spec:
+      containers:
+      - name: spark-job
+        image: yourdockerhub/spark:latest
+        command: ["spark-submit", "--master", "k8s://https://kubernetes.default.svc", "/opt/spark_jobs/bronze_ingestion.py"]
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: aws-creds
+              key: access_key
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: aws-creds
+              key: secret_key
+      restartPolicy: OnFailure
