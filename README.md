@@ -1,6 +1,4 @@
-# GitHub README.md (Enterprise Banking Data Platform)
 
-```markdown
 # Domain: Banking Big Data Platform
 
 **Project Overview**  
