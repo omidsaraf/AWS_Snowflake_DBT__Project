@@ -23,3 +23,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+## Raw Data Ingestion
+## This job ingests raw customer/account CSVs into S3 Bronze Layer.
