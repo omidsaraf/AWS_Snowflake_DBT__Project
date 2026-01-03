@@ -1,0 +1,14 @@
+# ~/.dbt/profiles.yml
+niloomid_snowflake:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: transformer_role
+      database: NILOOMID_DEV
+      warehouse: COMPUTE_WH
+      schema: public
+      threads: 4
