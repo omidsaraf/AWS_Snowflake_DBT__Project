@@ -41,7 +41,24 @@ models:
     # --- REPORTING LAYER ---
     marts:
       +schema: mart
-      +materialized: table  # Tables are faster for BI tools to query than views        
+      +materialized: table  # Tables are faster for BI tools to query than views  
+
+# ... (rest of your config above)
+
+# --- HOOKS ---
+# This executes your custom_logging.sql macro after every 'dbt run'
+on-run-end:
+  - "{{ log_model_results(results) }}"
+
+# --- VARS ---
+vars:
+  # You can define global variables here, such as a central source system name
+  'source_system': 'CORE_BANKING_S3'
+
+# --- QUARANTINE / TESTING ---
+tests:
+  niloomid_banking_dv:
+    +severity: warn  # Default to warn, but you can override to 'error' for critical checks      
         
 ## This defines staging, hub, link, satellite schemas, materialization types, and project paths.
 # Incremental Materialization: By switching Hubs, Links, and Satellites to incremental, dbt only processes new or changed data since the last run. For a bank with millions of daily transactions, this can reduce your Snowflake credit burn by over 80%.
