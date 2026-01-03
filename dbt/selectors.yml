@@ -1,0 +1,32 @@
+selectors:
+  - name: staging_layer
+    description: "Run only the cleaning and hashing models"
+    definition:
+      method: path
+      value: models/staging
+
+  - name: raw_vault_layer
+    description: "Run all Hubs, Links, and Satellites"
+    definition:
+      method: path
+      value: models/vault
+
+  - name: reporting_layer
+    description: "Build only the final BI tables"
+    definition:
+      method: path
+      value: models/marts
+
+# In a Banking Data Vault, you don't always want to run the whole pipeline. If a transaction file fails, you might only want to re-run the Staging and Links layers without touching the Customer Hub.
+
+# Selectors allow you to create "shortcuts" for these complex runs.
+
+# How to use it in your terminal
+# Instead of typing long paths, you can now use the names you defined:
+
+# To run only staging: dbt run --selector staging_layer
+
+# To run the whole Vault: dbt run --selector raw_vault_layer
+
+# Why this is important for your project
+# As your banking platform grows, you might have 100+ tables. Running everything every time is expensive in Snowflake. Selectors give you surgical control over which part of the "Medallion" architecture you are updating.
