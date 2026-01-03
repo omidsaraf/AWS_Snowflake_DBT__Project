@@ -1,0 +1,6 @@
+customer_id,first_name,last_name,email,created_at,updated_at
+C001,John,Doe,john.doe@example.com,2022-01-10,2023-12-01
+C002,Jane,Smith,jane.smith@example.com,2022-03-15,2023-11-20
+C003,Bob,Johnson,bob.johnson@example.com,2022-05-21,2023-12-02
+C004,Alice,Williams,alice.williams@example.com,2022-07-30,2023-11-30
+C005,Michael,Brown,michael.brown@example.com,2022-09-05,2023-12-01
