@@ -1,0 +1,30 @@
+name: niloomid_banking_dv
+version: '1.0'
+config-version: 2
+
+profile: niloomid_snowflake
+
+source-paths: ["models"]
+analysis-paths: ["analysis"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+data-paths: ["data"]
+
+target-path: "target"
+clean-targets: ["target", "dbt_modules"]
+
+models:
+  niloomid_banking_dv:
+    staging:
+      +schema: stg
+      +materialized: view
+    vault_hubs:
+      +schema: hub
+      +materialized: table
+    vault_links:
+      +schema: link
+      +materialized: table
+    vault_sats:
+      +schema: sat
+      +materialized: table
+## This defines staging, hub, link, satellite schemas, materialization types, and project paths.
