@@ -1,0 +1,25 @@
+from utils.spark_utils import create_spark_session, write_to_s3
+import logging
+import sys
+
+def main():
+    spark = create_spark_session("Bronze Ingestion")
+    
+    # Simulate ingestion from multiple banking systems
+    # In production, these could be JDBC reads, Kafka streams, or API extracts
+    try:
+        # Example: read from CSV files
+        customer_df = spark.read.option("header", True).csv("s3a://raw-bucket/customers/")
+        account_df = spark.read.option("header", True).csv("s3a://raw-bucket/accounts/")
+        
+        # Write raw data to Bronze Layer
+        write_to_s3(customer_df, "s3a://bronze-bucket/customers/")
+        write_to_s3(account_df, "s3a://bronze-bucket/accounts/")
+        
+        logging.info("Bronze ingestion completed successfully")
+    except Exception as e:
+        logging.error(f"Bronze ingestion failed: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
