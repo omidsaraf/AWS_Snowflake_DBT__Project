@@ -1,37 +1,39 @@
-## Silver Layer / Cleansing & Transformations
-
 from datetime import datetime, timedelta
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
-from airflow.utils.dates import days_ago
+from airflow.operators.bash import BashOperator
+from cosmos import DbtDag, ProjectConfig, ProfileConfig, ExecutionConfig
+from cosmos.profiles import SnowflakeUserPasswordProfileMapping
 
-default_args = {
-    'owner': 'data-engineering',
-    'depends_on_past': False,
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5)
-}
-
-with DAG(
-    dag_id='silver_processing_dag',
-    default_args=default_args,
-    description='Transform Bronze data into Silver Layer',
-    schedule_interval='@daily',
-    start_date=days_ago(1),
-    catchup=False,
-    tags=['banking', 'processing', 'spark']
-) as dag:
-
-    silver_processing = KubernetesPodOperator(
-        namespace='default',
-        image='yourdockerhub/spark:latest',
-        cmds=["spark-submit", "--master", "k8s://https://kubernetes.default.svc", "/opt/spark_jobs/silver_transform.py"],
-        name='silver-processing-job',
-        task_id='silver_processing_task',
-        get_logs=True,
-        is_delete_operator_pod=True
+# Using Astronomer Cosmos for dbt integration
+profile_config = ProfileConfig(
+    profile_name="banking_vault",
+    target_name="dev",
+    profile_mapping=SnowflakeUserPasswordProfileMapping(
+        conn_id="snowflake_default",
+        profile_args={
+            "database": "ANALYTICS",
+            "schema": "VAULT"
+        },
     )
+)
 
-    silver_processing
+dbt_project_config = ProjectConfig(
+    dbt_project_path="/opt/airflow/dbt",
+)
+
+dbt_dag = DbtDag(
+    project_config=dbt_project_config,
+    profile_config=profile_config,
+    execution_config=ExecutionConfig(
+        dbt_executable_path="/usr/local/bin/dbt",
+    ),
+    schedule_interval="0 4 * * *",  # 4 AM daily
+    start_date=datetime(2024, 1, 1),
+    catchup=False,
+    dag_id="dbt_banking_transformation",
+    default_args={
+        "retries": 2,
+        "retry_delay": timedelta(minutes=5),
+    },
+    tags=["dbt", "transformation"],
+)
