@@ -1,23 +1,19 @@
 
+-- dbt/models/staging/stg_banking_accounts.sql
 {%- set yaml_metadata -%}
 source_model: 'raw_accounts'
 derived_columns:
-  RECORD_SOURCE: '!AWS_S3_BANKING_CORE'
+  RECORD_SOURCE: '!S3_CORE_BANKING'
   LOAD_DATETIME: 'CURRENT_TIMESTAMP()'
 hashed_columns:
-  # Primary Key for the Account Hub
+  # The unique fingerprint for the Account
   ACCOUNT_HK: 'account_id'
   
-  # Business Key for the Customer Hub (for later joins)
+  # The unique fingerprint for the Customer (to link them)
   CUSTOMER_HK: 'customer_id'
 
-  # Link Key: The unique relationship between a customer and an account
-  LINK_CUSTOMER_ACCOUNT_HK:
-    - 'customer_id'
-    - 'account_id'
-    
-  # Change tracking for the Satellite
-  ACCOUNT_HASHDIFF:   -- Checksum for tracking balance changes
+  # The hash of descriptive data (tracks balance changes)
+  ACCOUNT_HASHDIFF: -- Checksum for tracking balance changes
     is_hashdiff: true
     columns:
       - 'account_type'
