@@ -1,28 +1,43 @@
 version: 2
 
 sources:
-  - name: raw_banking            -- This is the nickname you'll use in dbt
-    database: RAW_DB             -- Your actual Snowflake Database name
-    schema: LANDING              -- Your actual Snowflake Schema name
+  - name: raw_banking
+    database: RAW
+    schema: BANKING
+    description: "Raw banking data from S3"
     
     tables:
-      - name: raw_accounts       -- The actual table name in Snowflake
-        description: "Raw account data from core banking system"
-        tests:
-          - unique:
-              column_name: account_id
-          - not_null:
-              column_name: account_id
-
-      - name: raw_customers
-        description: "Raw customer profile data"
-        
-      - name: raw_transactions
-        description: "Immutable transaction ledger records"
-        freshness:               -- dbt will alert you if data stops flowing!
-          warn_after: {count: 24, period: hour}
-          error_after: {count: 48, period: hour}
-        loaded_at_field: transaction_date
+      - name: customers
+        description: "Customer master data"
+        columns:
+          - name: customer_id
+            description: "Unique customer identifier"
+            tests:
+              - not_null
+              - unique
+          - name: customer_name
+          - name: email
+          - name: created_at
+          
+      - name: accounts
+        description: "Account master data"
+        columns:
+          - name: account_id
+            tests:
+              - not_null
+              - unique
+          - name: customer_id
+            tests:
+              - not_null
+          - name: account_type
+          - name: balance
+          
+      - name: transactions
+        description: "Transaction records"
+        freshness:
+          warn_after: {count: 12, period: hour}
+          error_after: {count: 24, period: hour}
+        loaded_at_field: transaction_datetime
 
 
 # Now, instead of hardcoding a table name like SELECT * FROM RAW_DB.LANDING.RAW_ACCOUNTS, you would update your stg_banking_accounts.sql to use:
