@@ -33,39 +33,38 @@ This project demonstrates a scalable, enterprise-grade banking data platform usi
 
 NILOOMID-banking-data-platform/
 ├── README.md
+├── .gitignore                   # MUST be at the root
+├── requirements.txt
 ├── docs/
-│   └── images/
-├── infrastructure/
-│   ├── terraform/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   └── k8s/
-│       ├── airflow-deployment.yaml
-│       ├── spark-job.yaml
-│       └── dbt-runner.yaml
-├── dags/
-│   ├── ingestion_dag.py
-│   ├── processing_dag.py
-│   └── dbt_dag.py
-├── dbt/
+│   └── architecture_diagram.png
+├── infrastructure/              # Provisioning Snowflake/S3
+│   └── terraform/
+│       ├── main.tf
+│       ├── variables.tf
+│       └── providers.tf         # Added for clarity
+├── dags/                        # Airflow Orchestration
+│   ├── s3_to_snowflake_ingest.py # More descriptive name
+│   └── dbt_vault_run.py         # Uses Cosmos or BashOperator
+├── dbt/                         # The Logic Core
+│   ├── dbt_project.yml
+│   ├── packages.yml
+│   ├── selectors.yml
+│   ├── macros/                  # Added: For generate_schema_name and masking
 │   ├── models/
-│   │   ├── staging/
-│   │   ├── vault_hubs/
-│   │   ├── vault_links/
-│   │   └── vault_sats/
-│   └── dbt_project.yml
-├── spark_jobs/
+│   │   ├── staging/             # _sources.yml + stg_ files
+│   │   ├── vault/               # Hierarchy: hubs/, links/, satellites/
+│   │   └── marts/               # mart_customer_360.sql
+│   └── tests/
+├── spark_jobs/                  # Heavy lifting (cleaning large CSVs)
 │   ├── bronze_ingestion.py
-│   ├── silver_transform.py
 │   └── utils/
-├── docker/
-│   ├── Dockerfile-airflow
-│   ├── Dockerfile-spark
-│   └── Dockerfile-dbt
-├── scripts/
-│   └── deploy.sh
-└── requirements.txt
+├── docker/                      # Containerization
+│   ├── airflow.Dockerfile       # Renamed for standard naming
+│   ├── dbt.Dockerfile
+│   └── spark.Dockerfile
+└── scripts/
+    └── setup_env.sh
+
 
 ````
 
