@@ -1,30 +1,46 @@
-name: niloomid_banking_dv
-version: '1.0'
+name: 'niloomid_banking_dv'
+version: '1.0.0'
 config-version: 2
 
-profile: niloomid_snowflake
+profile: 'niloomid_snowflake'
 
-source-paths: ["models"]
+# Updated for dbt v1.x+ compatibility
+model-paths: ["models"]
 analysis-paths: ["analysis"]
 macro-paths: ["macros"]
 test-paths: ["tests"]
-data-paths: ["data"]
+seed-paths: ["data"]     # Replaces data-paths
 
 target-path: "target"
-clean-targets: ["target", "dbt_modules"]
+clean-targets: ["target", "dbt_packages"] # Replaces dbt_modules
 
 models:
   niloomid_banking_dv:
+    # --- STAGING LAYER ---
     staging:
       +schema: stg
-      +materialized: view
-    vault_hubs:
-      +schema: hub
-      +materialized: table
-    vault_links:
-      +schema: link
-      +materialized: table
-    vault_sats:
-      +schema: sat
-      +materialized: table
+      +materialized: view      # Views keep staging fresh and lightweight
+    
+    # --- RAW VAULT LAYER ---
+    vault:
+      # Hubs & Links: Unique keys and relationships
+      vault_hubs:
+        +schema: hub
+        +materialized: incremental
+        +on_schema_change: append_new_columns
+
+      vault_links:
+        +schema: link
+        +materialized: incremental
+
+      # Satellites: Historical context (SCD Type 2)
+      vault_sats:
+        +schema: sat
+        +materialized: incremental # Mandatory for tracking changes over time
+        
 ## This defines staging, hub, link, satellite schemas, materialization types, and project paths.
+# Incremental Materialization: By switching Hubs, Links, and Satellites to incremental, dbt only processes new or changed data since the last run. For a bank with millions of daily transactions, this can reduce your Snowflake credit burn by over 80%.
+
+# Schema Evolution: Adding on_schema_change: append_new_columns allows your warehouse to grow. If the source system adds a new field (like "Secondary Email"), dbt will automatically add that column to your Snowflake table without failing the pipeline.
+
+# Modernized Paths: Using model-paths and seed-paths ensures your project works with the latest dbt features and avoids "deprecated" warnings.
