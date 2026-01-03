@@ -22,11 +22,11 @@
 {{ config(materialized='incremental') }}
 
 {%- set yaml_metadata -%}
-source_model: 'stg_accounts'
-src_pk: 'LINK_CUSTOMER_ACCOUNT_HK' -- The unique hash of the relationship
+source_model: 'stg_banking_accounts'
+src_pk: 'LINK_CUSTOMER_ACCOUNT_HK'
 src_fk:
-  - 'CUSTOMER_HK'                  -- Foreign Key to Hub Customer
-  - 'ACCOUNT_HK'                   -- Foreign Key to Hub Account
+  - 'CUSTOMER_HK'
+  - 'ACCOUNT_HK'
 src_ldts: 'LOAD_DATETIME'
 src_source: 'RECORD_SOURCE'
 {%- endset -%}
