@@ -1,9 +1,9 @@
 terraform {
   backend "s3" {
-    bucket         = "niloomid-terraform-state"
-    key            = "dev/terraform.tfstate" # Isolated path
-    region         = "ap-southeast-2"
-    dynamodb_table = "terraform-lock-table"
+    bucket         = "banking-platform-terraform-state"
+    key            = "dev/terraform.tfstate"
+    region         = "us-east-1"
     encrypt        = true
+    dynamodb_table = "terraform-state-lock"
   }
 }
