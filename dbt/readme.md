@@ -10,31 +10,31 @@ Easy to extend for other domains: accounts, transactions, loans, cards, etc.
 
 
 ```Plaintext
-dbt/
+niloomid_banking_dv/ (Root)
+├── .gitignore                   # Added: Security for credentials/logs
+├── README.md                    # Added: Project documentation
+├── dbt_project.yml              # Central configuration
+├── packages.yml                 # Automate-DV dependency
+├── selectors.yml                # Layer execution logic
+├── profiles.yml                 # (Keep locally, do NOT upload to GitHub)
 ├── models/
-│   ├── staging/
-│   │   ├── _sources.yml             # Maps RAW_DB.LANDING tables
-│   │   ├── stg_banking_accounts.sql # Parent for Hub_Account & Sat_Account
-│   │   ├── stg_customer.sql         # Parent for Hub_Customer & Sat_Customer
-│   │   └── stg_transactions.sql     # Parent for T_Link_Transactions
-│   │
-│   ├── vault/
+│   ├── staging/                 # Layer 1: Hashing & Cleaning
+│   │   ├── _sources.yml
+│   │   ├── stg_banking_accounts.sql
+│   │   ├── stg_customer.sql
+│   │   └── stg_transactions.sql
+│   ├── vault/                   # Layer 2: Raw Vault (Auditable)
 │   │   ├── hubs/
 │   │   │   ├── hub_account.sql
 │   │   │   └── hub_customer.sql
 │   │   ├── links/
 │   │   │   ├── link_customer_account.sql
-│   │   │   └── t_link_transactions.sql # <--- ADDED: Transactional Link
+│   │   │   └── t_link_transactions.sql
 │   │   └── satellites/
 │   │       ├── sat_customer_profile.sql
 │   │       └── sat_account_balance.sql
-│   │
-│   └── marts/
+│   └── marts/                   # Layer 3: Information Marts (Gold)
 │       ├── _marts.yml
-│       └── mart_customer_360.sql    # Joins Hubs, Links, & latest Sat records
-│
-├── macros/                          # automate-dv macros & custom masking
-├── tests/                           # Business logic tests (e.g. balance > 0)
-├── dbt_project.yml                  # Configures +materialized: incremental
-├── packages.yml                     # Includes automate_dv & dbt_utils
-└── selectors.yml
+│       └── mart_customer_360.sql
+├── macros/                      # Custom logic
+└── tests/                       # Data quality tests
