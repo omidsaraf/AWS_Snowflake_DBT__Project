@@ -1,68 +1,70 @@
-name: 'niloomid_banking_dv'
+name: 'banking_vault'
 version: '1.0.0'
 config-version: 2
 
-profile: 'niloomid_snowflake'
+profile: 'banking_vault'
 
-# Updated for dbt v1.x+ compatibility
 model-paths: ["models"]
-analysis-paths: ["analysis"]
-macro-paths: ["macros"]
+analysis-paths: ["analyses"]
 test-paths: ["tests"]
-seed-paths: ["data"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
 
 target-path: "target"
-clean-targets: ["target", "dbt_packages"]
+clean-targets:
+  - "target"
+  - "dbt_packages"
+  - "logs"
+
+vars:
+  load_datetime: "{{ run_started_at }}"
+  source_system: "CORE_BANKING"
 
 models:
-  niloomid_banking_dv:
-    # --- STAGING LAYER ---
+  banking_vault:
+    +materialized: view
+    +schema: raw
+    
     staging:
-      +schema: stg
       +materialized: view
-
-    # --- RAW VAULT LAYER ---
+      +schema: staging
+      +tags: ["staging"]
+      snowflake_warehouse: TRANSFORM_S_WH
+      
     vault:
+      +materialized: incremental
+      +schema: vault
+      +tags: ["vault", "incremental"]
+      
       hubs:
-        +schema: hub
         +materialized: incremental
-        +on_schema_change: append_new_columns
-
-      links:
-        +schema: link
-        +materialized: incremental
-        +on_schema_change: append_new_columns
-
-      satellites:
-        +schema: sat
-        +materialized: incremental
-        +on_schema_change: append_new_columns
-
-    # --- REPORTING LAYER ---
-    marts:
-      +schema: mart
-      +materialized: table  # Tables are faster for BI tools to query than views  
-
-# ... (rest of your config above)
-
-# --- HOOKS ---
-# This executes your custom_logging.sql macro after every 'dbt run'
-on-run-end:
-  - "{{ log_model_results(results) }}"
-
-# --- VARS ---
-vars:
-  # You can define global variables here, such as a central source system name
-  'source_system': 'CORE_BANKING_S3'
-
-# --- QUARANTINE / TESTING ---
-tests:
-  niloomid_banking_dv:
-    +severity: warn  # Default to warn, but you can override to 'error' for critical checks      
+        +unique_key: hub_key
+        +on_schema_change: fail
         
-## This defines staging, hub, link, satellite schemas, materialization types, and project paths.
-# Incremental Materialization: By switching Hubs, Links, and Satellites to incremental, dbt only processes new or changed data since the last run. For a bank with millions of daily transactions, this can reduce your Snowflake credit burn by over 80%.
+      links:
+        +materialized: incremental
+        +unique_key: link_key
+        +on_schema_change: fail
+        
+      satellites:
+        +materialized: incremental
+        +unique_key: ["hub_key", "load_datetime"]
+        +on_schema_change: append_new_columns
+        
+    marts:
+      +materialized: table
+      +schema: marts
+      +tags: ["marts"]
+      snowflake_warehouse: TRANSFORM_M_WH
 
-# Schema Evolution: Adding on_schema_change: append_new_columns allows your warehouse to grow. If the source system adds a new field (like "Secondary Email"), dbt will automatically add that column to your Snowflake table without failing the pipeline.
+on-run-start:
+  - "{{ log('Starting dbt run at ' ~ run_started_at, info=True) }}"
 
-# Modernized Paths: Using model-paths and seed-paths ensures your project works with the latest dbt features and avoids "deprecated" warnings.
+on-run-end:
+  - "{{ log('Completed dbt run at ' ~ run_started_at, info=True) }}"
+
+seeds:
+  banking_vault:
+    +schema: seeds
+    +quote_columns: false
