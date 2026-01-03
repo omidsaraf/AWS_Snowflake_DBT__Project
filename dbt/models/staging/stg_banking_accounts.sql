@@ -26,3 +26,5 @@ hashed_columns:
                      source_model=metadata['source_model'],
                      derived_columns=metadata['derived_columns'],
                      hashed_columns=metadata['hashed_columns']) }}
+
+-- By using the automate_dv.stage macro, you ensure that Snowflake processes the hashing using highly optimized vectorized functions.
