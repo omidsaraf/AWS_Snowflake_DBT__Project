@@ -44,6 +44,34 @@ src_source: 'RECORD_SOURCE'
                    source_model=metadata['source_model']) }}
 
 
+
+{{
+  config(
+    materialized='incremental',
+    unique_key=['hub_customer_key', 'load_datetime']
+  )
+}}
+
+-- WITH source_data AS (
+--     SELECT
+--         {{ dbt_utils.generate_surrogate_key(['customer_id', "'{{ var("source_system") }}'']) }} as hub_customer_key,
+--         customer_name,
+--         email,
+--         phone,
+--         address,
+--         created_at,
+--         updated_at,
+--         {{ dbt_utils.current_timestamp() }} as load_datetime,
+--         NULL as load_end_datetime
+--     FROM {{ ref('stg_customers') }}
+--     {% if is_incremental() %}
+--         WHERE updated_at > (SELECT MAX(updated_at) FROM {{ this }})
+--     {% endif %}
+-- )
+
+-- SELECT * FROM source_data
+
+
 -- SCD Type 2 Behavior: Unlike a traditional database that overwrites john.doe@example.com, this Satellite keeps the old email and the new email with different LOAD_DATETIME stamps. This is critical for KYC (Know Your Customer) compliance.
 
 -- Idempotency: Because it is materialized='incremental', you can run this model multiple times a day. It will only add data if there is a real change in the customer's attributes.
