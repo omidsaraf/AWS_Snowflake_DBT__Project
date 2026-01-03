@@ -1,0 +1,9 @@
+transaction_id,account_id,transaction_type,amount,transaction_date
+T001,A001,Deposit,500.00,2023-11-01
+T002,A001,Withdrawal,200.00,2023-11-05
+T003,A002,Deposit,1000.00,2023-11-10
+T004,A003,Withdrawal,50.00,2023-11-15
+T005,A004,Deposit,3000.00,2023-11-20
+T006,A005,Deposit,150.00,2023-11-25
+T007,A003,Deposit,250.00,2023-11-28
+T008,A002,Withdrawal,500.00,2023-11-30
