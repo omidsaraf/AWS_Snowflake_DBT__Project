@@ -1,0 +1,41 @@
+# -------------------------
+# Apache Airflow
+# -------------------------
+apache-airflow==2.8.0
+apache-airflow-providers-amazon==6.2.0
+apache-airflow-providers-cncf-kubernetes==2.4.0
+
+# -------------------------
+# Spark
+# -------------------------
+pyspark==3.5.1
+
+# -------------------------
+# dbt for Snowflake
+# -------------------------
+dbt-snowflake==1.7.0
+
+# -------------------------
+# AWS SDK
+# -------------------------
+boto3==1.26.0
+
+# -------------------------
+# Snowflake Connector
+# -------------------------
+snowflake-connector-python==3.1.2
+
+# -------------------------
+# Utilities
+# -------------------------
+pandas==2.1.0
+pyyaml==6.0
+requests==2.31.0
+loguru==0.7.0
+
+##Airflow versions match the DAG examples (2.8.0) for compatibility with KubernetesPodOperator.
+##PySpark 3.5.1 for Bronze/Silver ETL jobs.
+##dbt-snowflake 1.7.0 for Data Vault transformations.
+##boto3 for AWS S3 access from Spark and Airflow containers.
+##snowflake-connector-python for dbt and ETL integration.
+##Utilities like pandas and loguru for ETL transformations and logging.
