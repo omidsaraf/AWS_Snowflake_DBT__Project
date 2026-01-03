@@ -8,7 +8,7 @@ This project demonstrates a scalable, enterprise-grade banking data platform usi
 
 ## 1. Architecture Overview
 
-![End-to-End Architecture](./docs/images/banking_data_architecture.png)
+<img width="1536" height="1024" alt="ChatGPT Image Jan 3, 2026, 05_10_06 PM" src="https://github.com/user-attachments/assets/ba3d45c7-b0da-4ffe-97d5-668de5d53d4a" />
 
 
 
