@@ -23,3 +23,4 @@ def write_to_s3(df, path, format="parquet", mode="overwrite"):
     logging.info(f"Writing data to S3 path: {path}, format: {format}, mode: {mode}")
     df.write.format(format).mode(mode).save(path)
 ## Utility Functions
+## Centralizes Spark session creation, reading, and writing to S3.
