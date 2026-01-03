@@ -1,0 +1,19 @@
+```Plaintext
+
+# --- dbt specific ---
+target/             # Compiled SQL and manifest files (regenerated every run)
+dbt_packages/       # External libraries (installed via dbt deps)
+logs/               # Debug logs from your dbt runs
+
+# --- Credentials & Environment ---
+profiles.yml        # NEVER upload this (contains Snowflake passwords)
+.env                # Local environment variables
+
+# --- IDE & OS ---
+.vscode/            # VS Code settings
+.idea/              # PyCharm/IntelliJ settings
+.DS_Store           # macOS system files
+*.swp               # Vim swap files
+
+
+#### Security (Stops password leaks)
