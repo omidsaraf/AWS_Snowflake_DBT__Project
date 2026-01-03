@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: mart_customer_360
+    description: >
+      The "Gold" layer reporting table for the Niloomid Banking platform. 
+      It provides a unified view of customers, their linked accounts, 
+      and their latest available balances.
+    columns:
+      - name: customer_id
+        description: "The unique business key for the customer."
+        tests:
+          - not_null
+
+      - name: account_id
+        description: "The unique business key for the bank account."
+        tests:
+          - not_null
+
+      - name: balance
+        description: "The current balance of the account (latest snapshot)."
+        
+      - name: email
+        description: "Primary contact email for the customer."
+        tests:
+          - dbt_utils.is_email  # Requires dbt_utils package
