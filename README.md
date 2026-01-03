@@ -67,73 +67,39 @@ NILOOMID-banking-data-platform/
 
 
 NILOOMID-banking-data-platform/
-
 ├── README.md
-
 ├── docs/
-
 │   └── images/
-
 ├── infrastructure/
-
 │   ├── terraform/
-
 │   │   ├── main.tf
-
 │   │   ├── variables.tf
-
 │   │   └── outputs.tf
-
 │   └── k8s/
-
 │       ├── airflow-deployment.yaml
-
 │       ├── spark-job.yaml
-
 │       └── dbt-runner.yaml
-
 ├── dags/
-
 │   ├── ingestion_dag.py
-
 │   ├── processing_dag.py
-
 │   └── dbt_dag.py
-
 ├── dbt/
-
 │   ├── models/
-
 │   │   ├── staging/
-
 │   │   ├── vault_hubs/
-
 │   │   ├── vault_links/
-
 │   │   └── vault_sats/
-
 │   └── dbt_project.yml
-
 ├── spark_jobs/
-
 │   ├── bronze_ingestion.py
-
 │   ├── silver_transform.py
-
 │   └── utils/
-
 ├── docker/
-
 │   ├── Dockerfile-airflow
-
 │   ├── Dockerfile-spark
-
 │   └── Dockerfile-dbt
-
 ├── scripts/
-
 │   └── deploy.sh
-
 └── requirements.txt
 ````
 
