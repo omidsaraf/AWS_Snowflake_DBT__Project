@@ -2,43 +2,107 @@ version: 2
 
 sources:
   - name: raw_banking
-    database: RAW
+    database: RAW_DB
     schema: BANKING
-    description: "Raw banking data from S3"
+    description: "Raw banking data loaded from S3"
     
     tables:
       - name: customers
-        description: "Customer master data"
+        description: "Customer master data from core banking system"
+        identifier: raw_customers
+        loaded_at_field: _loaded_at
+        freshness:
+          warn_after: {count: 6, period: hour}
+          error_after: {count: 12, period: hour}
         columns:
           - name: customer_id
-            description: "Unique customer identifier"
+            description: "Unique customer identifier (Business Key)"
             tests:
               - not_null
               - unique
           - name: customer_name
+            description: "Full customer name"
           - name: email
+            description: "Customer email address"
+          - name: phone
+            description: "Contact phone number"
+          - name: date_of_birth
+            description: "Customer date of birth"
           - name: created_at
-          
+            description: "Record creation timestamp"
+          - name: updated_at
+            description: "Last update timestamp"
+            
       - name: accounts
-        description: "Account master data"
+        description: "Account information"
+        identifier: raw_accounts
+        loaded_at_field: _loaded_at
+        freshness:
+          warn_after: {count: 6, period: hour}
+          error_after: {count: 12, period: hour}
         columns:
           - name: account_id
+            description: "Unique account identifier (Business Key)"
             tests:
               - not_null
               - unique
           - name: customer_id
+            description: "Foreign key to customer"
             tests:
               - not_null
+              - relationships:
+                  to: source('raw_banking', 'customers')
+                  field: customer_id
           - name: account_type
+            description: "Type of account (CHECKING, SAVINGS, etc.)"
+            tests:
+              - accepted_values:
+                  values: ['CHECKING', 'SAVINGS', 'CREDIT', 'LOAN']
           - name: balance
-          
+            description: "Current account balance"
+          - name: currency
+            description: "Account currency code"
+          - name: status
+            description: "Account status (ACTIVE, CLOSED, SUSPENDED)"
+          - name: opened_date
+            description: "Date account was opened"
+          - name: updated_at
+            description: "Last update timestamp"
+            
       - name: transactions
         description: "Transaction records"
+        identifier: raw_transactions
+        loaded_at_field: _loaded_at
         freshness:
-          warn_after: {count: 12, period: hour}
-          error_after: {count: 24, period: hour}
-        loaded_at_field: transaction_datetime
-
+          warn_after: {count: 1, period: hour}
+          error_after: {count: 3, period: hour}
+        columns:
+          - name: transaction_id
+            description: "Unique transaction identifier (Business Key)"
+            tests:
+              - not_null
+              - unique
+          - name: account_id
+            description: "Account ID for transaction"
+            tests:
+              - not_null
+          - name: transaction_type
+            description: "Type of transaction"
+            tests:
+              - accepted_values:
+                  values: ['DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'PAYMENT', 'FEE']
+          - name: amount
+            description: "Transaction amount"
+            tests:
+              - not_null
+          - name: transaction_datetime
+            description: "When transaction occurred"
+            tests:
+              - not_null
+          - name: merchant
+            description: "Merchant name for purchase transactions"
+          - name: category
+            description: "Transaction category"
 
 # Now, instead of hardcoding a table name like SELECT * FROM RAW_DB.LANDING.RAW_ACCOUNTS, you would update your stg_banking_accounts.sql to use:
 
