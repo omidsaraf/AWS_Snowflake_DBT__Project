@@ -32,84 +32,140 @@ This project demonstrates a scalable, enterprise-grade banking data platform usi
 ```
 
 NILOOMID-banking-data-platform/
-├── README.md
-├── .gitignore                   # MUST be at the root
-├── requirements.txt
+AWS_Snowflake_DBT__Project/
+├── .github/
+│   └── workflows/
+│       ├── ci.yml
+│       └── terraform-plan.yml
+├── .gitignore                          # ✅ MUST CREATE
+├── README.md                           # ✅ UPDATE
+├── requirements.txt                    # ✅ UPDATE
+├── .env.example                        # ✅ CREATE (not .env)
+├── profiles.yml.example                # ✅ CREATE (not profiles.yml)
+│
 ├── docs/
-│   └── architecture_diagram.png
-├── infrastructure/              # Provisioning Snowflake/S3
-│   └── terraform/
-│       ├── main.tf
-│       ├── variables.tf
-│       └── providers.tf         # Added for clarity
-├── dags/                        # Airflow Orchestration
-│   ├── s3_to_snowflake_ingest.py # More descriptive name
-│   └── dbt_vault_run.py         # Uses Cosmos or BashOperator
-├── dbt/                         # The Logic Core
-│   ├── dbt_project.yml
-│   ├── packages.yml
-│   ├── selectors.yml
-│   ├── macros/                  # Added: For generate_schema_name and masking
-│   ├── models/
-│   │   ├── staging/             # _sources.yml + stg_ files
-│   │   ├── vault/               # Hierarchy: hubs/, links/, satellites/
-│   │   └── marts/               # mart_customer_360.sql
-│   └── tests/
-├── spark_jobs/                  # Heavy lifting (cleaning large CSVs)
-│   ├── bronze_ingestion.py
-│   └── utils/
-├── docker/                      # Containerization
-│   ├── airflow.Dockerfile       # Renamed for standard naming
-│   ├── dbt.Dockerfile
-│   └── spark.Dockerfile
-└── scripts/
-    └── setup_env.sh
-
-
-NILOOMID-banking-data-platform/
-├── README.md
-├── docs/
-│   └── images/
+│   ├── images/
+│   │   └── architecture_diagram.png
+│   ├── SETUP.md                        # ✅ CREATE
+│   ├── DATA_VAULT_DESIGN.md           # ✅ CREATE
+│   └── API_DOCUMENTATION.md
+│
 ├── infrastructure/
-└── terraform/          # <--- Infrastructure Root
-        ├── modules/        # Reusable code (EKS, S3, Snowflake)
-        │   ├── aws/
-        │   └── snowflake/
-        └── env/            # <--- Environment Definitions
-            ├── dev/
-            │   ├── main.tf
-            │   ├── variables.tf
-            │   └── backend.tf
-            └── prod/
-                ├── main.tf
-                ├── variables.tf
-                └── backend.tf
-│   └── k8s/
-│       ├── airflow-deployment.yaml
-│       ├── spark-job.yaml
+│   └── terraform/
+│       ├── modules/                    # ✅ CREATE MODULE STRUCTURE
+│       │   ├── aws/
+│       │   │   ├── s3/
+│       │   │   │   ├── main.tf
+│       │   │   │   ├── variables.tf
+│       │   │   │   └── outputs.tf
+│       │   │   └── eks/
+│       │   │       ├── main.tf
+│       │   │       ├── variables.tf
+│       │   │       └── outputs.tf
+│       │   └── snowflake/
+│       │       ├── database/
+│       │       │   ├── main.tf
+│       │       │   ├── variables.tf
+│       │       │   └── outputs.tf
+│       │       └── warehouse/
+│       │           ├── main.tf
+│       │           ├── variables.tf
+│       │           └── outputs.tf
+│       └── env/                        # ✅ CREATE ENVIRONMENT STRUCTURE
+│           ├── dev/
+│           │   ├── main.tf
+│           │   ├── variables.tf
+│           │   ├── backend.tf
+│           │   ├── terraform.tfvars.example
+│           │   └── providers.tf
+│           └── prod/
+│               ├── main.tf
+│               ├── variables.tf
+│               ├── backend.tf
+│               ├── terraform.tfvars.example
+│               └── providers.tf
+│
+├── k8s/                                # ✅ MOVE TO ROOT (per your README)
+│   ├── namespace.yaml
+│   ├── airflow/
+│   │   ├── deployment.yaml
+│   │   ├── service.yaml
+│   │   └── configmap.yaml
+│   ├── spark/
+│   │   └── spark-job.yaml
+│   └── dbt/
 │       └── dbt-runner.yaml
-├── dags/
-│   ├── ingestion_dag.py
-│   ├── processing_dag.py
-│   └── dbt_dag.py
-├── dbt/
+│
+├── dags/                               # Airflow DAGs
+│   ├── __init__.py
+│   ├── s3_to_snowflake_ingest.py      # ✅ RENAME from ingestion_dag.py
+│   ├── dbt_vault_run.py               # ✅ RENAME from dbt_dag.py
+│   └── utils/
+│       ├── __init__.py
+│       └── snowflake_helpers.py
+│
+├── dbt/                                # dbt Core Project
+│   ├── dbt_project.yml                # ✅ FIX CONFIGURATION
+│   ├── packages.yml                   # ✅ ADD DBT PACKAGES
+│   ├── selectors.yml                  # ✅ CREATE
+│   ├── profiles.yml.example           # ✅ CREATE TEMPLATE
+│   ├── macros/
+│   │   ├── generate_schema_name.sql
+│   │   ├── hash_key.sql
+│   │   └── data_masking.sql
 │   ├── models/
 │   │   ├── staging/
-│   │   ├── vault_hubs/
-│   │   ├── vault_links/
-│   │   └── vault_sats/
-│   └── dbt_project.yml
-├── spark_jobs/
-│   ├── bronze_ingestion.py
-│   ├── silver_transform.py
-│   └── utils/
+│   │   │   ├── _sources.yml           # ✅ SOURCE DEFINITIONS
+│   │   │   ├── _staging.yml           # ✅ MODEL DOCUMENTATION
+│   │   │   ├── stg_customers.sql
+│   │   │   ├── stg_accounts.sql
+│   │   │   └── stg_transactions.sql
+│   │   ├── vault/
+│   │   │   ├── hubs/
+│   │   │   │   ├── _hubs.yml
+│   │   │   │   ├── hub_customer.sql
+│   │   │   │   ├── hub_account.sql
+│   │   │   │   └── hub_transaction.sql
+│   │   │   ├── links/
+│   │   │   │   ├── _links.yml
+│   │   │   │   ├── link_customer_account.sql
+│   │   │   │   └── link_account_transaction.sql
+│   │   │   └── satellites/
+│   │   │       ├── _satellites.yml
+│   │   │       ├── sat_customer_details.sql
+│   │   │       ├── sat_account_details.sql
+│   │   │       └── sat_transaction_details.sql
+│   │   └── marts/
+│   │       ├── _marts.yml
+│   │       └── mart_customer_360.sql
+│   ├── tests/
+│   │   ├── generic/
+│   │   └── singular/
+│   ├── seeds/
+│   │   └── country_codes.csv
+│   └── snapshots/
+│
+├── spark_jobs/                         # PySpark ETL Jobs
+│   ├── __init__.py
+│   ├── bronze_ingestion.py            # Raw data ingestion
+│   ├── silver_transform.py            # Data cleansing
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── spark_config.py
+│   │   └── data_quality.py
+│   └── tests/
+│       └── test_transformations.py
+│
 ├── docker/
-│   ├── Dockerfile-airflow
-│   ├── Dockerfile-spark
-│   └── Dockerfile-dbt
-├── scripts/
-│   └── deploy.sh
-└── requirements.txt
+│   ├── airflow.Dockerfile             # ✅ RENAME (consistent naming)
+│   ├── dbt.Dockerfile
+│   ├── spark.Dockerfile
+│   └── docker-compose.yml             # ✅ CREATE
+│
+└── scripts/
+    ├── setup_env.sh                   # Environment setup
+    ├── deploy.sh                      # Deployment script
+    └── init_snowflake.sql             # Snowflake initialization
 ````
 
 ---
