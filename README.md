@@ -297,6 +297,27 @@ dbt run --project-dir dbt
 * CloudWatch logs
 
 ---
+🔐 Required Secrets Setup
+Run these commands to add all necessary secrets:
+bash# AWS Credentials
+gh secret set AWS_ACCESS_KEY_ID_DEV
+gh secret set AWS_SECRET_ACCESS_KEY_DEV
+gh secret set AWS_ACCESS_KEY_ID_PROD
+gh secret set AWS_SECRET_ACCESS_KEY_PROD
+
+# Snowflake Credentials
+gh secret set SNOWFLAKE_ACCOUNT
+gh secret set SNOWFLAKE_USER_DEV
+gh secret set SNOWFLAKE_PASSWORD_DEV
+gh secret set SNOWFLAKE_USER_PROD
+gh secret set SNOWFLAKE_PASSWORD_PROD
+gh secret set SNOWFLAKE_CI_USER
+gh secret set SNOWFLAKE_CI_PASSWORD
+
+# Optional
+gh secret set SLACK_WEBHOOK
+
+
 
 ## 8. References & Standards
 
