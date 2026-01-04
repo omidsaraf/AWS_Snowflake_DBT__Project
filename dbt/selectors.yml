@@ -1,22 +1,43 @@
 selectors:
-  - name: staging_layer
-    description: "Run only the cleaning and hashing models"
+  - name: staging_only
+    description: "Run only staging models"
     definition:
-      method: path
-      value: models/staging
+      tag: staging
 
-  - name: raw_vault_layer
-    description: "Run all Hubs, Links, and Satellites"
+  - name: vault_only
+    description: "Run only data vault models"
     definition:
-      method: path
-      value: models/vault
+      tag: vault
 
-  - name: reporting_layer
-    description: "Build only the final BI tables"
+  - name: marts_only
+    description: "Run only mart models"
     definition:
-      method: path
-      value: models/marts
+      tag: marts
 
+  - name: hubs_and_links
+    description: "Run hubs and links (structural elements)"
+    definition:
+      union:
+        - tag: hub
+        - tag: link
+
+  - name: incremental_models
+    description: "Run all incremental models"
+    definition:
+      config:
+        materialized: incremental
+
+  - name: daily_refresh
+    description: "Models that need daily refresh"
+    definition:
+      union:
+        - tag: staging
+        - tag: vault
+        
+  - name: full_refresh_safe
+    description: "Models safe for full refresh"
+    definition:
+      tag: full_refresh_safe
 # In a Banking Data Vault, you don't always want to run the whole pipeline. If a transaction file fails, you might only want to re-run the Staging and Links layers without touching the Customer Hub.
 
 # Selectors allow you to create "shortcuts" for these complex runs.
