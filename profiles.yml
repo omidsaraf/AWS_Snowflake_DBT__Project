@@ -1,16 +1,33 @@
-niloomid_snowflake:
-  target: dev
+
+banking_vault:
   outputs:
     dev:
       type: snowflake
-      account: your_org_account_id
-      user: your_username
-      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}" # Pulls from your .env file
-      role: SYSADMIN
-      database: NILOOMID_DEV
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE') }}_DEV"
       warehouse: COMPUTE_WH
-      schema: STG # Default schema for local runs
+      schema: VAULT
       threads: 4
+      client_session_keep_alive: False
+      query_tag: dbt_dev
+      
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
+      warehouse: TRANSFORM_WH
+      schema: VAULT
+      threads: 8
+      client_session_keep_alive: True
+      query_tag: dbt_prod
+      
+  target: dev
 
 ##Since this is for your local machine, you can hardcode your account details (but use env vars for the password to be safe)
 # In your dbt_project.yml, make sure the profile: key matches the name in your profiles.yml:
