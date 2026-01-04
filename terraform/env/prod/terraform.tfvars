@@ -9,7 +9,7 @@ subnet_ids = ["subnet-0444prod", "subnet-0555prod"]
 
 # Compute Sizing (Scaling up for volume)
 eks_instance_types       = ["t3.large"]
-snowflake_warehouse_size = "SMALL"
+snowflake_warehouse_size = "ON_DEMAND" # Production needs 99.9% availability
 
 # Snowflake Identity
 snowflake_account  = "xy12345.ap-southeast-2"
