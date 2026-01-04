@@ -2,7 +2,7 @@
 <!-- ---------------  TOP-LEVEL BADGES  --------------- -->
 <div align="center">
 
-# NILOOMID · Enterprise Big Data Platform 🏦
+# Enterprise Big Data Platform 🏦
 ### Domain: Banking
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
