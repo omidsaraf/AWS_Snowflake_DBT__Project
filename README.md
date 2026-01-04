@@ -38,46 +38,80 @@ This project demonstrates a scalable, enterprise-grade banking data platform usi
 
 ```mermaid
 
+%% ---------- CONFIG ----------
+%% colourful, big-font, boxed style
+%% --------------------------------
 graph TD
-    A[Push/PR] --> B[CI Pipeline]
-    B --> C[Code Quality]
-    B --> D[Python Tests]
-    B --> E[Airflow Validation]
-    B --> F[dbt Validation]
-    B --> G[SQL Lint]
-    B --> H[Security Scan]
-    B --> I[Docker Build]
-    
-    C --> J[CI Success]
-    D --> J
-    E --> J
-    F --> J
-    G --> J
-    H --> J
-    I --> J
-    
-    K[Terraform Changes] --> L[Terraform Validate]
-    L --> M[Security Scan]
-    M --> N[Plan DEV]
-    M --> O[Plan PROD]
-    
-    N --> P[Apply DEV - Auto]
-    O --> Q[Apply PROD - Manual Approval]
-    
-    R[Main Branch] --> S[Build Docker Images]
-    S --> T[Push to Registry]
+%% ---------- STYLES ----------
+classDef startNode fill:#FFE135,stroke:#333,stroke-width:3px,color:#000,font-size:22px
+classDef ciNode   fill:#4FC3F7,stroke:#0277BD,stroke-width:3px,color:#000,font-size:20px
+classDef tfNode   fill:#81C784,stroke:#2E7D32,stroke-width:3px,color:#000,font-size:20px
+classDef endNode  fill:#FF8A80,stroke:#D32F2F,stroke-width:3px,color:#000,font-size:20px
 
+%% ---------- NODES ----------
+A[Push/PR]:::startNode
+B[CI Pipeline]:::ciNode
+C[Code Quality]:::ciNode
+D[Python Tests]:::ciNode
+E[Airflow Validation]:::ciNode
+F[dbt Validation]:::ciNode
+G[SQL Lint]:::ciNode
+H[Security Scan]:::ciNode
+I[Docker Build]:::ciNode
+J[CI Success]:::ciNode
+
+K[Terraform Changes]:::tfNode
+L[Terraform Validate]:::tfNode
+M[Security Scan]:::tfNode
+N[Plan DEV]:::tfNode
+O[Plan PROD]:::tfNode
+P[Apply DEV - Auto]:::tfNode
+Q[Apply PROD - Manual Approval]:::tfNode
+
+R[Main Branch]:::endNode
+S[Build Docker Images]:::endNode
+T[Push to Registry]:::endNode
+
+%% ---------- EDGES ----------
+A --> B
+B --> C
+B --> D
+B --> E
+B --> F
+B --> G
+B --> H
+B --> I
+
+C --> J
+D --> J
+E --> J
+F --> J
+G --> J
+H --> J
+I --> J
+
+K --> L
+L --> M
+M --> N
+M --> O
+
+N --> P
+O --> Q
+
+R --> S
+S --> T
 ```
 ```
+
 NILOOMID-banking-data-platform/
+└── Root
 ├── .github/workflows/          # CI/CD pipelines (GitHub Actions)
 ├── .gitignore                  # Security: Ignore state files and secrets
-├── requirements.txt            # Python dependencies
-├── .env               # Environment variable template
+├── requirements.txt           
+├── .env               
 ├── profiles.yml      # dbt profile template
-│
 ├── docs/                       # Technical documentation
-│   ├── SETUP.md                # Environment setup guide
+│   ├── SETUP.md                
 │   ├── DATA_VAULT_DESIGN.md    # Business logic & ERD
 │   └── API_DOCUMENTATION.md    # Metadata API docs
 │
@@ -90,7 +124,6 @@ NILOOMID-banking-data-platform/
 │   └── env/                    # Environment Instances
 │       ├── dev/ (main, vars)   # Sandbox (Spot Instances)
 │       └── prod/ (main, vars)  # Production (On-Demand)
-│
 ├── k8s/                             
 │   ├── namespace.yaml
 │   ├── airflow/
@@ -101,14 +134,14 @@ NILOOMID-banking-data-platform/
 │   │   └── spark-job.yaml
 │   └── dbt/
 │       └── dbt-runner.yaml
-├── dags/                               # Airflow DAGs
+├── dags/                      # Airflow DAGs
 │   ├── __init__.py
 │   ├── ingestion_dag.py    
 │   ├── dbt_dag.py           
 │   └── utils/
 │       ├── __init__.py
 │       └── snowflake_helpers.py
-├── dbt/                                # dbt Core Project
+├── dbt/                       # dbt Core Project
 │   ├── dbt_project.yml                
 │   ├── packages.yml                   
 │   ├── selectors.yml                
@@ -119,8 +152,8 @@ NILOOMID-banking-data-platform/
 │   │   └── data_masking.sql
 │   ├── models/
 │   │   ├── staging/
-│   │   │   ├── _sources.yml           # ✅ SOURCE DEFINITIONS
-│   │   │   ├── _staging.yml           # ✅ MODEL DOCUMENTATION
+│   │   │   ├── _sources.yml          
+│   │   │   ├── _staging.yml          
 │   │   │   ├── stg_customers.sql
 │   │   │   ├── stg_accounts.sql
 │   │   │   └── stg_transactions.sql
@@ -149,10 +182,10 @@ NILOOMID-banking-data-platform/
 │   │   └── country_codes.csv
 │   └── snapshots/
 │
-├── spark_jobs/                         # PySpark ETL Jobs
+├── spark_jobs/                         
 │   ├── __init__.py
-│   ├── bronze_ingestion.py            # Raw data ingestion
-│   ├── silver_transform.py            # Data cleansing
+│   ├── bronze_ingestion.py           
+│   ├── silver_transform.py            
 │   ├── utils/
 │   │   ├── __init__.py
 │   │   ├── spark_config.py
@@ -160,15 +193,15 @@ NILOOMID-banking-data-platform/
 │   └── tests/
 │       └── test_transformations.py
 │
-├── docker/                     # Multi-stage Dockerfiles
+├── docker/                
 │   ├── airflow.Dockerfile
 │   ├── dbt.Dockerfile
 │   └── spark.Dockerfile
 │   └── docker-compose.yml
 └── scripts/
-    ├── setup_env.sh                   # Environment setup
-    ├── deploy.sh                      # Deployment script
-    └── init_snowflake.sql             # Snowflake initialization
+    ├── setup_env.sh              
+    ├── deploy.sh                   
+    └── init_snowflake.sql      
 ````
 
 ---
