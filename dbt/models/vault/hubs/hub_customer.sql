@@ -1,3 +1,35 @@
+{{
+  config(
+    materialized='incremental',
+    unique_key='hub_customer_key',
+    tags=['hub', 'customer']
+  )
+}}
+
+{%- set source_model = ref('stg_customers') -%}
+
+WITH source_data AS (
+    SELECT DISTINCT
+        customer_id,
+        record_source,
+        load_datetime
+    FROM {{ source_model }}
+    {% if is_incremental() %}
+        WHERE load_datetime > (SELECT MAX(load_datetime) FROM {{ this }})
+    {% endif %}
+),
+
+hashed AS (
+    SELECT
+        {{ dbt_utils.generate_surrogate_key(['customer_id']) }} AS hub_customer_key,
+        customer_id,
+        record_source,
+        load_datetime
+    FROM source_data
+)
+
+SELECT * FROM hashed
+
 -- {{ config(
 --     materialized='table'
 -- ) }}
@@ -29,27 +61,27 @@
 --                    source_model=source_model) }}
 
 
-{{
-  config(
-    materialized='incremental',
-    unique_key='hub_customer_key'
-  )
-}}
+-- {{
+--   config(
+--     materialized='incremental',
+--     unique_key='hub_customer_key'
+--   )
+-- }}
 
-WITH source_data AS (
-    SELECT DISTINCT
-        customer_id,
-        '{{ var("source_system") }}' as record_source,
-        {{ dbt_utils.current_timestamp() }} as load_datetime
-    FROM {{ ref('stg_customers') }}
-    {% if is_incremental() %}
-        WHERE load_datetime > (SELECT MAX(load_datetime) FROM {{ this }})
-    {% endif %}
-)
+-- WITH source_data AS (
+--     SELECT DISTINCT
+--         customer_id,
+--         '{{ var("source_system") }}' as record_source,
+--         {{ dbt_utils.current_timestamp() }} as load_datetime
+--     FROM {{ ref('stg_customers') }}
+--     {% if is_incremental() %}
+--         WHERE load_datetime > (SELECT MAX(load_datetime) FROM {{ this }})
+--     {% endif %}
+-- )
 
-SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id', 'record_source']) }} as hub_customer_key,
-    customer_id,
-    record_source,
-    load_datetime
-FROM source_data
+-- SELECT
+--     {{ dbt_utils.generate_surrogate_key(['customer_id', 'record_source']) }} as hub_customer_key,
+--     customer_id,
+--     record_source,
+--     load_datetime
+-- FROM source_data
