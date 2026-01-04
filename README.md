@@ -4,6 +4,10 @@
 **Project Overview**  
 This project demonstrates a scalable, enterprise-grade banking data platform using modern Data Engineering and DevOps best practices. It ingests, processes, models, and serves banking data at scale using **AWS, Snowflake, Spark, Airflow, dbt, Data Vault, Docker, Terraform, and Kubernetes (K8s).**
 
+[![Terraform](https://img.shields.io/badge/Infrastructure-Terraform-623CE4?logo=terraform)](https://www.terraform.io/)
+[![Snowflake](https://img.shields.io/badge/Warehouse-Snowflake-29B5E8?logo=snowflake)](https://www.snowflake.com/)
+[![dbt](https://img.shields.io/badge/Modeling-dbt-FF694B?logo=dbt)](https://www.getdbt.com/)
+[![Kubernetes](https://img.shields.io/badge/Compute-Kubernetes-326CE5?logo=kubernetes)](https://kubernetes.io/)
 ---
 
 ## 1. Architecture Overview
@@ -14,16 +18,14 @@ This project demonstrates a scalable, enterprise-grade banking data platform usi
 
 **Components & Flow:**
 
-| Layer | Tool / Technology | Description |
-|-------|-----------------|-------------|
-| Data Ingestion | Spark / AWS S3 / Kafka | Batch & real-time ingestion from core banking systems, payment gateways, and CRM. |
-| Data Lake / Bronze Layer | AWS S3 | Raw storage layer (immutable, append-only) |
-| Data Processing / Silver | Spark / Databricks | Cleansing, validation, transformations, enrichment |
-| Data Vault Layer | dbt + Snowflake | Implemented following **Data Vault 2.0** methodology for historization and auditability |
-| Orchestration | Airflow | Manage ETL workflows, scheduling, monitoring |
-| Infrastructure | Terraform | Automated provisioning of AWS, Snowflake, S3, and K8s clusters |
-| Deployment | Docker + Kubernetes | Containerized workflows for Spark jobs, Airflow workers, dbt runs |
-| Analytics & Reporting | Snowflake + BI tools | Secure, governed access for analysts & business teams |
+| Layer | Technology | Role |
+| :--- | :--- | :--- |
+| **Ingestion** | PySpark / Kafka | Batch & Streaming ingestion from core banking APIs. |
+| **Storage** | AWS S3 (Medallion) | Raw (Bronze), Cleansed (Silver), and Curated (Gold) layers. |
+| **Compute** | AWS EKS (K8s) | Distributed processing for Spark and Airflow workers. |
+| **Warehouse** | Snowflake | Enterprise Data Vault and Information Marts. |
+| **Modeling** | dbt Core | SQL-based transformations and Data Vault automation. |
+| **IaC** | Terraform | Environment-as-Code (Dev/Prod isolation). |
 
 ---
 
@@ -63,60 +65,28 @@ graph TD
 ```
 ```
 NILOOMID-banking-data-platform/
-AWS_Snowflake_DBT__Project/
-├── .github/
-│   └── workflows/
-│       ├── ci.yml
-│       └── terraform-plan.yml
-├── .gitignore                          # ✅ MUST CREATE
-├── README.md                           # ✅ UPDATE
-├── requirements.txt                    # ✅ UPDATE
-├── .env.example                        # ✅ CREATE (not .env)
-├── profiles.yml.example                # ✅ CREATE (not profiles.yml)
+├── .github/workflows/          # CI/CD pipelines (GitHub Actions)
+├── .gitignore                  # Security: Ignore state files and secrets
+├── requirements.txt            # Python dependencies
+├── .env               # Environment variable template
+├── profiles.yml      # dbt profile template
 │
-├── docs/
-│   ├── images/
-│   │   └── architecture_diagram.png
-│   ├── SETUP.md                        # ✅ CREATE
-│   ├── DATA_VAULT_DESIGN.md           # ✅ CREATE
-│   └── API_DOCUMENTATION.md
+├── docs/                       # Technical documentation
+│   ├── SETUP.md                # Environment setup guide
+│   ├── DATA_VAULT_DESIGN.md    # Business logic & ERD
+│   └── API_DOCUMENTATION.md    # Metadata API docs
 │
-├── infrastructure/
-│   └── terraform/
-│       ├── modules/                    # ✅ CREATE MODULE STRUCTURE
-│       │   ├── aws/
-│       │   │   ├── s3/
-│       │   │   │   ├── main.tf
-│       │   │   │   ├── variables.tf
-│       │   │   │   └── outputs.tf
-│       │   │   └── eks/
-│       │   │       ├── main.tf
-│       │   │       ├── variables.tf
-│       │   │       └── outputs.tf
-│       │   └── snowflake/
-│       │       ├── database/
-│       │       │   ├── main.tf
-│       │       │   ├── variables.tf
-│       │       │   └── outputs.tf
-│       │       └── warehouse/
-│       │           ├── main.tf
-│       │           ├── variables.tf
-│       │           └── outputs.tf
-│       └── env/                        # ✅ CREATE ENVIRONMENT STRUCTURE
-│           ├── dev/
-│           │   ├── main.tf
-│           │   ├── variables.tf
-│           │   ├── backend.tf
-│           │   ├── terraform.tfvars.example
-│           │   └── providers.tf
-│           └── prod/
-│               ├── main.tf
-│               ├── variables.tf
-│               ├── backend.tf
-│               ├── terraform.tfvars.example
-│               └── providers.tf
+├── terraform/   # Infrastructure as Code
+│   ├── providers.tf            # Version locking (AWS/Snowflake)
+│   ├── variables.tf            # Global variable schema
+│   ├── modules/                # Reusable Infrastructure Components
+│   │   ├── aws/ (s3, eks, iam) # IRSA and S3 security logic
+│   │   └── snowflake/          # DB, Warehouse, and RBAC
+│   └── env/                    # Environment Instances
+│       ├── dev/ (main, vars)   # Sandbox (Spot Instances)
+│       └── prod/ (main, vars)  # Production (On-Demand)
 │
-├── k8s/                                # ✅ MOVE TO ROOT (per your README)
+├── k8s/                             
 │   ├── namespace.yaml
 │   ├── airflow/
 │   │   ├── deployment.yaml
@@ -126,20 +96,18 @@ AWS_Snowflake_DBT__Project/
 │   │   └── spark-job.yaml
 │   └── dbt/
 │       └── dbt-runner.yaml
-│
 ├── dags/                               # Airflow DAGs
 │   ├── __init__.py
-│   ├── s3_to_snowflake_ingest.py      # ✅ RENAME from ingestion_dag.py
-│   ├── dbt_vault_run.py               # ✅ RENAME from dbt_dag.py
+│   ├── ingestion_dag.py    
+│   ├── dbt_dag.py           
 │   └── utils/
 │       ├── __init__.py
 │       └── snowflake_helpers.py
-│
 ├── dbt/                                # dbt Core Project
-│   ├── dbt_project.yml                # ✅ FIX CONFIGURATION
-│   ├── packages.yml                   # ✅ ADD DBT PACKAGES
-│   ├── selectors.yml                  # ✅ CREATE
-│   ├── profiles.yml.example           # ✅ CREATE TEMPLATE
+│   ├── dbt_project.yml                
+│   ├── packages.yml                   
+│   ├── selectors.yml                
+│   ├── profiles.yml.example           
 │   ├── macros/
 │   │   ├── generate_schema_name.sql
 │   │   ├── hash_key.sql
@@ -187,12 +155,11 @@ AWS_Snowflake_DBT__Project/
 │   └── tests/
 │       └── test_transformations.py
 │
-├── docker/
-│   ├── airflow.Dockerfile             # ✅ RENAME (consistent naming)
+├── docker/                     # Multi-stage Dockerfiles
+│   ├── airflow.Dockerfile
 │   ├── dbt.Dockerfile
-│   ├── spark.Dockerfile
-│   └── docker-compose.yml             # ✅ CREATE
-│
+│   └── spark.Dockerfile
+│   └── docker-compose.yml
 └── scripts/
     ├── setup_env.sh                   # Environment setup
     ├── deploy.sh                      # Deployment script
@@ -237,9 +204,9 @@ cd banking-data-platform
 2. Provision infrastructure:
 
 ```bash
-cd infrastructure/terraform
+cd terraform/env/dev
 terraform init
-terraform apply
+terraform apply -var-file="terraform.tfvars"
 ```
 
 3. Deploy K8s workloads:
@@ -297,25 +264,6 @@ dbt run --project-dir dbt
 * CloudWatch logs
 
 ---
-🔐 Required Secrets Setup
-Run these commands to add all necessary secrets:
-bash# AWS Credentials
-gh secret set AWS_ACCESS_KEY_ID_DEV
-gh secret set AWS_SECRET_ACCESS_KEY_DEV
-gh secret set AWS_ACCESS_KEY_ID_PROD
-gh secret set AWS_SECRET_ACCESS_KEY_PROD
-
-# Snowflake Credentials
-gh secret set SNOWFLAKE_ACCOUNT
-gh secret set SNOWFLAKE_USER_DEV
-gh secret set SNOWFLAKE_PASSWORD_DEV
-gh secret set SNOWFLAKE_USER_PROD
-gh secret set SNOWFLAKE_PASSWORD_PROD
-gh secret set SNOWFLAKE_CI_USER
-gh secret set SNOWFLAKE_CI_PASSWORD
-
-# Optional
-gh secret set SLACK_WEBHOOK
 
 
 
@@ -327,37 +275,6 @@ gh secret set SLACK_WEBHOOK
 * [Apache Airflow](https://airflow.apache.org/)
 
 ```
-
----
-
-# Architecture Diagram Plan
-
-We can create a **visual diagram** using icons (AWS, Snowflake, Spark, Airflow, dbt, Docker, K8s):
-
-**Flow (Left → Right):**
-
-1. **Data Sources (Banking Systems, CRM, Payments)**
-   - Icons: Database, API, Kafka
-2. **Ingestion Layer**
-   - Spark Batch/Streaming → S3 (Bronze)
-   - Icon: Spark, S3
-3. **Processing Layer**
-   - Spark jobs → Silver Layer
-   - Icon: Spark, S3
-4. **Data Vault Layer**
-   - dbt builds Hub, Link, Satellite → Snowflake
-   - Icon: dbt, Snowflake
-5. **Orchestration**
-   - Airflow DAGs control ingestion, processing, dbt runs
-   - Icon: Airflow
-6. **Deployment & Infrastructure**
-   - Terraform provision AWS infra
-   - K8s runs Spark, Airflow, dbt containers
-   - Icon: Terraform, K8s, Docker
-7. **Analytics / BI**
-   - Snowflake serves BI dashboards
-   - Icon: BI tool / SQL query
-
 ---
 https://www.youtube.com/watch?v=5NCywQcJ2r8
 
