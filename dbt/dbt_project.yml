@@ -17,54 +17,96 @@ clean-targets:
   - "dbt_packages"
   - "logs"
 
+# Global variables
 vars:
   load_datetime: "{{ run_started_at }}"
   source_system: "CORE_BANKING"
-
+  hash_algorithm: "MD5"
+  # Data Vault constants
+  record_source: "BANKING_CORE"
+  
 models:
   banking_vault:
     +materialized: view
-    +schema: raw
+    +on_schema_change: "fail"
     
+    # STAGING LAYER
     staging:
       +materialized: view
       +schema: staging
       +tags: ["staging"]
-      snowflake_warehouse: TRANSFORM_S_WH
+      snowflake_warehouse: COMPUTE_WH
+      +docs:
+        node_color: "#5DBB63"
       
+    # DATA VAULT LAYER
     vault:
       +materialized: incremental
       +schema: vault
-      +tags: ["vault", "incremental"]
+      +tags: ["vault", "data_vault_2"]
+      snowflake_warehouse: TRANSFORM_WH
+      +docs:
+        node_color: "#F39C12"
       
+      # HUBS - Business Keys
       hubs:
         +materialized: incremental
-        +unique_key: hub_key
-        +on_schema_change: fail
+        +on_schema_change: "fail"
+        +tags: ["hub"]
+        +unique_key: "hub_key"
+        +post-hook:
+          - "{{ log('Hub loaded: ' ~ this.name, info=True) }}"
         
+      # LINKS - Relationships
       links:
         +materialized: incremental
-        +unique_key: link_key
-        +on_schema_change: fail
+        +on_schema_change: "fail"
+        +tags: ["link"]
+        +unique_key: "link_key"
         
+      # SATELLITES - Descriptive Data
       satellites:
         +materialized: incremental
+        +on_schema_change: "append_new_columns"
+        +tags: ["satellite"]
         +unique_key: ["hub_key", "load_datetime"]
-        +on_schema_change: append_new_columns
         
+    # MARTS LAYER - Business Logic
     marts:
       +materialized: table
       +schema: marts
-      +tags: ["marts"]
-      snowflake_warehouse: TRANSFORM_M_WH
+      +tags: ["marts", "business_logic"]
+      snowflake_warehouse: REPORTING_WH
+      +docs:
+        node_color: "#3498DB"
 
-on-run-start:
-  - "{{ log('Starting dbt run at ' ~ run_started_at, info=True) }}"
-
-on-run-end:
-  - "{{ log('Completed dbt run at ' ~ run_started_at, info=True) }}"
-
+# Seeds configuration
 seeds:
   banking_vault:
     +schema: seeds
     +quote_columns: false
+
+# Snapshots configuration  
+snapshots:
+  banking_vault:
+    +target_schema: snapshots
+    +strategy: timestamp
+    +unique_key: id
+    +updated_at: updated_at
+
+# Documentation
+docs:
+  banking_vault:
+    +docs:
+      show: true
+
+# Pre/Post hooks
+on-run-start:
+  - "{{ log('=== Starting dbt run at ' ~ run_started_at ~ ' ===', info=True) }}"
+  - "CREATE SCHEMA IF NOT EXISTS {{ target.schema }}_staging"
+  - "CREATE SCHEMA IF NOT EXISTS {{ target.schema }}_vault"
+  - "CREATE SCHEMA IF NOT EXISTS {{ target.schema }}_marts"
+
+on-run-end:
+  - "{{ log('=== Completed dbt run at ' ~ run_started_at ~ ' ===', info=True) }}"
+  - "{{ log('Total models run: ' ~ results | length, info=True) }}"
