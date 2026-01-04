@@ -29,8 +29,39 @@ This project demonstrates a scalable, enterprise-grade banking data platform usi
 
 ## 2. Project Folder Structure
 
-```
+```mermaid
 
+graph TD
+    A[Push/PR] --> B[CI Pipeline]
+    B --> C[Code Quality]
+    B --> D[Python Tests]
+    B --> E[Airflow Validation]
+    B --> F[dbt Validation]
+    B --> G[SQL Lint]
+    B --> H[Security Scan]
+    B --> I[Docker Build]
+    
+    C --> J[CI Success]
+    D --> J
+    E --> J
+    F --> J
+    G --> J
+    H --> J
+    I --> J
+    
+    K[Terraform Changes] --> L[Terraform Validate]
+    L --> M[Security Scan]
+    M --> N[Plan DEV]
+    M --> O[Plan PROD]
+    
+    N --> P[Apply DEV - Auto]
+    O --> Q[Apply PROD - Manual Approval]
+    
+    R[Main Branch] --> S[Build Docker Images]
+    S --> T[Push to Registry]
+
+```
+```
 NILOOMID-banking-data-platform/
 AWS_Snowflake_DBT__Project/
 ├── .github/
