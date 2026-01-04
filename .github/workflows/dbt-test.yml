@@ -1,0 +1,72 @@
+name: dbt Tests & Documentation
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'dbt/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'dbt/**'
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+  workflow_dispatch:
+
+jobs:
+  dbt-test:
+    name: dbt Test Suite
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install dbt
+        run: |
+          pip install dbt-core==1.7.4 dbt-snowflake==1.7.1
+          
+      - name: Install dbt packages
+        working-directory: ./dbt
+        run: dbt deps
+        
+      - name: dbt Seed
+        working-directory: ./dbt
+        run: dbt seed --target ci
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_CI_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_CI_PASSWORD }}
+          
+      - name: dbt Run
+        working-directory: ./dbt
+        run: dbt run --target ci
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_CI_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_CI_PASSWORD }}
+          
+      - name: dbt Test
+        working-directory: ./dbt
+        run: dbt test --target ci
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_CI_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_CI_PASSWORD }}
+          
+      - name: Generate dbt Docs
+        working-directory: ./dbt
+        run: |
+          dbt docs generate --target ci
+          
+      - name: Deploy dbt Docs to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dbt/target
