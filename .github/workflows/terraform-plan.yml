@@ -1,1 +1,332 @@
+name: Terraform Plan & Apply
 
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/terraform-plan.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'infrastructure/terraform/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+
+env:
+  TF_VERSION: '1.5.7'
+  AWS_REGION: 'us-east-1'
+
+jobs:
+  # ============================================
+  # Job 1: Terraform Validation & Format Check
+  # ============================================
+  terraform-validate:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        environment: [dev, prod]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          
+      - name: Terraform Format Check
+        working-directory: infrastructure/terraform/env/${{ matrix.environment }}
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+        
+      - name: Terraform Init
+        working-directory: infrastructure/terraform/env/${{ matrix.environment }}
+        run: terraform init -backend=false
+        
+      - name: Terraform Validate
+        working-directory: infrastructure/terraform/env/${{ matrix.environment }}
+        run: terraform validate
+
+  # ============================================
+  # Job 2: Terraform Security Scan
+  # ============================================
+  terraform-security:
+    name: Terraform Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: infrastructure/terraform
+          soft_fail: true
+          
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: infrastructure/terraform
+          framework: terraform
+          soft_fail: true
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+          
+      - name: Upload Checkov results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: checkov-results.sarif
+
+  # ============================================
+  # Job 3: Terraform Plan (DEV)
+  # ============================================
+  terraform-plan-dev:
+    name: Terraform Plan (DEV)
+    runs-on: ubuntu-latest
+    needs: [terraform-validate, terraform-security]
+    if: github.event_name == 'pull_request' || github.event.inputs.environment == 'dev'
+    
+    env:
+      TF_WORKSPACE: dev
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          
+      - name: Terraform Init
+        working-directory: infrastructure/terraform/env/dev
+        run: |
+          terraform init \
+            -backend-config="bucket=banking-platform-terraform-state-dev" \
+            -backend-config="key=dev/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="dynamodb_table=terraform-state-lock-dev"
+            
+      - name: Terraform Plan
+        working-directory: infrastructure/terraform/env/dev
+        run: |
+          terraform plan \
+            -var="snowflake_account=${{ secrets.SNOWFLAKE_ACCOUNT }}" \
+            -var="snowflake_user=${{ secrets.SNOWFLAKE_USER_DEV }}" \
+            -var="snowflake_password=${{ secrets.SNOWFLAKE_PASSWORD_DEV }}" \
+            -var="environment=dev" \
+            -out=tfplan
+            
+      - name: Save Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-dev
+          path: infrastructure/terraform/env/dev/tfplan
+          retention-days: 5
+          
+      - name: Comment PR with Plan
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('infrastructure/terraform/env/dev/tfplan.txt', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Terraform Plan (DEV)
+              
+              \`\`\`terraform
+              ${plan}
+              \`\`\`
+              
+              Plan saved as artifact: tfplan-dev`
+            });
+
+  # ============================================
+  # Job 4: Terraform Plan (PROD)
+  # ============================================
+  terraform-plan-prod:
+    name: Terraform Plan (PROD)
+    runs-on: ubuntu-latest
+    needs: [terraform-validate, terraform-security]
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod'
+    
+    env:
+      TF_WORKSPACE: prod
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          
+      - name: Terraform Init
+        working-directory: infrastructure/terraform/env/prod
+        run: |
+          terraform init \
+            -backend-config="bucket=banking-platform-terraform-state-prod" \
+            -backend-config="key=prod/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="dynamodb_table=terraform-state-lock-prod"
+            
+      - name: Terraform Plan
+        working-directory: infrastructure/terraform/env/prod
+        run: |
+          terraform plan \
+            -var="snowflake_account=${{ secrets.SNOWFLAKE_ACCOUNT }}" \
+            -var="snowflake_user=${{ secrets.SNOWFLAKE_USER_PROD }}" \
+            -var="snowflake_password=${{ secrets.SNOWFLAKE_PASSWORD_PROD }}" \
+            -var="environment=prod" \
+            -out=tfplan
+            
+      - name: Save Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-prod
+          path: infrastructure/terraform/env/prod/tfplan
+          retention-days: 30
+
+  # ============================================
+  # Job 5: Terraform Apply (DEV) - Auto Apply
+  # ============================================
+  terraform-apply-dev:
+    name: Terraform Apply (DEV)
+    runs-on: ubuntu-latest
+    needs: terraform-plan-dev
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: 
+      name: development
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          
+      - name: Download Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-dev
+          path: infrastructure/terraform/env/dev
+          
+      - name: Terraform Init
+        working-directory: infrastructure/terraform/env/dev
+        run: |
+          terraform init \
+            -backend-config="bucket=banking-platform-terraform-state-dev" \
+            -backend-config="key=dev/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="dynamodb_table=terraform-state-lock-dev"
+            
+      - name: Terraform Apply
+        working-directory: infrastructure/terraform/env/dev
+        run: terraform apply -auto-approve tfplan
+        
+      - name: Post Apply Summary
+        run: |
+          echo "✅ DEV infrastructure updated successfully"
+          echo "Environment: development"
+          echo "Timestamp: $(date)"
+
+  # ============================================
+  # Job 6: Terraform Apply (PROD) - Manual Approval
+  # ============================================
+  terraform-apply-prod:
+    name: Terraform Apply (PROD)
+    runs-on: ubuntu-latest
+    needs: terraform-plan-prod
+    if: github.ref == 'refs/heads/main'
+    environment: 
+      name: production
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          
+      - name: Download Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-prod
+          path: infrastructure/terraform/env/prod
+          
+      - name: Terraform Init
+        working-directory: infrastructure/terraform/env/prod
+        run: |
+          terraform init \
+            -backend-config="bucket=banking-platform-terraform-state-prod" \
+            -backend-config="key=prod/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="dynamodb_table=terraform-state-lock-prod"
+            
+      - name: Terraform Apply
+        working-directory: infrastructure/terraform/env/prod
+        run: terraform apply -auto-approve tfplan
+        
+      - name: Post Apply Summary
+        run: |
+          echo "✅ PROD infrastructure updated successfully"
+          echo "Environment: production"
+          echo "Timestamp: $(date)"
+          
+      - name: Notify Team
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Production infrastructure has been updated via Terraform'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
